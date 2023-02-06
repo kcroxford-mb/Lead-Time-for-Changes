@@ -7,10 +7,12 @@ Determine the lead time for changes from Github repo.  This works best with repo
 - pipenv
 
 # Setup 
+```
 git clone https://github.com/kcroxford-mb/Lead-Time-for-Changes.git
 cd Lead-Time-for-Change 
 pipenv shell
 pip install  -r requirements.txt
+```
 
 Create a github access token and save it as an environment variable named GITHUB_ACCESS_TOKEN
 
