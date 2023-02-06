@@ -26,21 +26,21 @@ There are a few command line options that need to be set
     -v : run "-v true" if you want to see the matching reference branches, and the commits within
 
 ## Gathering for a single repo 
-python3 main.py \
- -o MY_ORG\
- -t main \
- -rs release \
- -md 31  \
+python3 main.py \\
+ -o MY_ORG \\
+ -t main \\
+ -rs release \\
+ -md 31  \\
  --repo MY_REPO
 
 
 ## Gathering for all repos under an organization
-python3 main.py \
- -o MY_ORG\
- -t main \
- -rs release \
- -md 31  \
- -e EXCLUDED_REPO \
- -e EXCLUDED_REPO
+python3 main.py \\
+ -o MY_ORG \\
+ -t main \\
+ -rs release \\
+ -md 31  \\
+ -e EXCLUDED_REPO \\
+ -e EXCLUDED_REPO 
 
 
