@@ -90,9 +90,8 @@ def main(args):
                                 for commit in c['data'][0]:
                                     try:
                                         if verbose:
-                                            print(f"--commit_message: {commit.get('message')}") 
+                                            print(f"--commit_message: { commit.get('commit').get('message') }") 
                                             print(f"--author: {commit.get('commit').get('author')}")
-                                            print(f"--date: {commit.get('commit').get('author').get('date')}")
                                         # Get the date of the commit 
                                         c = commit.get('commit').get('author').get('date')
                                         c = convert_time(c)
