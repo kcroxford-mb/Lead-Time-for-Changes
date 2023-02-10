@@ -3,6 +3,7 @@ import sys
 import os 
 import pandas as pd
 import datetime
+import re
 from typing import List,Dict
 from github import Github
 
@@ -15,7 +16,7 @@ def convert_time(ts):
     return datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%SZ')
 
 def print_results(results: List) -> None:
-    print ("-" * 30 )
+    print ("-" * 30 )  
     print ("Results:")
     for result in results:
         repo = result.get('repo')
@@ -24,6 +25,13 @@ def print_results(results: List) -> None:
         print (f"---repo: {repo}, lead_time {lt.days}d {lt.seconds // 3600}h ")
     print ("-" * 30 )
 
+def parse_result_method(r):
+    m = re.compile(r'(percentile)(\d{2})')
+    m = m.match(r)
+    if m:
+        return [m.group(1), int(m.group(2)) / 100 ]
+    else:
+        return ['mean']
 
 def main(args):
     # define args from the CLI 
@@ -34,6 +42,7 @@ def main(args):
     max_days = args.maxDays
     repo = args.repo
     verbose = args.verbose
+    result_method = parse_result_method(args.resultMethod)
 
     base_url = 'https://api.github.com'
     token = os.environ['GITHUB_ACCESS_TOKEN']
@@ -90,8 +99,8 @@ def main(args):
                                 for commit in c['data'][0]:
                                     try:
                                         if verbose:
-                                            print(f"--commit_message: { commit.get('commit').get('message') }") 
-                                            print(f"--author: {commit.get('commit').get('author')}")
+                                            print(f"--commit: {commit.get('commit').get('author').get('name')} {commit.get('commit').get('author').get('date')} { commit.get('commit').get('message')[:40] }") 
+                                            #print(f"--author: {commit.get('commit').get('author')}")
                                         # Get the date of the commit 
                                         c = commit.get('commit').get('author').get('date')
                                         c = convert_time(c)
@@ -104,8 +113,10 @@ def main(args):
                                     
             # Skip if no commits added to times list
             if len(times) != 0:
-                lt = pd.to_timedelta(pd.Series(times)).quantile(.90)
-                #lt = pd.to_timedelta(pd.Series(times)).mean()
+                if result_method[0] == 'percentile':
+                    lt = pd.to_timedelta(pd.Series(times)).quantile(result_method[1])
+                else:
+                    lt = pd.to_timedelta(pd.Series(times)).mean()
                 if lt is not pd.NaT: 
                     result = {
                         'repo' : repo,
@@ -173,6 +184,14 @@ if __name__ == "__main__":
         type=bool, 
         required=False,
         help="Print out more details"
+    ) 
+
+    parser.add_argument( 
+        '-rm', 
+        '--resultMethod',
+        type=str, 
+        required=True,
+        help="Options are percentile[0-9][0-9] or mean.  Example --rm percentile90  "
     ) 
 
     args = parser.parse_args()
