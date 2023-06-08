@@ -1,18 +1,9 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-
-# In[394]:
-
-# This is an export from a Jupyter Notebook. The code should be cleaned up
-
 import os
 import json
 import requests
 import datetime
 from typing import List,Dict
 import pandas as pd
-
 
 class Github:
     def __init__(self,base_url: str,token: str, org: str) -> None:
@@ -299,8 +290,6 @@ def calc_repo_stats(repo : str, prs: List, max_days : int, debug=False ):
     } 
 
 
-# In[395]:
-
 token = os.environ['GITHUB_ACCESS_TOKEN']
 org = os.environ['GITHUB_ORG']
 base_url = 'https://api.github.com'
@@ -317,6 +306,7 @@ g = Github(base_url, token, org)
 
 params = {}
 repos = g.get_repo_list(params)
+print(repos) 
 
 target_branch = 'develop'
 ref_string =  None #set this to a branch you want to match, like 'release' or 'rfc'
@@ -365,13 +355,9 @@ for repo in repos:
         pass
 
 
-# In[396]:
-
 df = pd.DataFrame(r)
 pd.set_option('display.max_rows', None)
 filtered = df[df['total_prs']!=0]
 filtered.sort_values(by='total_prs', ascending=False)
-
-
 
 

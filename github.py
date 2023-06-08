@@ -46,11 +46,10 @@ class Github:
                 f"{self.base_url}/repos/{self.org}/{repo}/pulls", 
                 params=params, 
         )
-
         return self.paginate(req)
 
     #'commits_url': 'https://api.github.com/repos/messagebird-dev/numbers/pulls/180/commits',
-    def get_commit_list(self, repo: str, number: int, params: dict ) -> List:
+    def get_pr_commit_list(self, repo: str, number: int, params: dict ) -> List:
         '''
         gathers all of the PRs that match the query params
         '''
@@ -58,7 +57,16 @@ class Github:
                 f"{self.base_url}/repos/{self.org}/{repo}/pulls/{number}/commits", 
                 params=params, 
         )
-
+        return self.paginate(req)
+    
+    def get_commit_list(self, repo: str, params: dict ) -> List:
+        '''
+        gathers all of the commits that match the query params
+        '''
+        req = self.s.get(
+                f"{self.base_url}/repos/{self.org}/{repo}/commits", 
+                params=params, 
+        )
         return self.paginate(req)
     
     def get_pr_count(self, repo: str, params: dict) -> int:
