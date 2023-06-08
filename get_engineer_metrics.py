@@ -54,10 +54,12 @@ def main(args):
 
     if not excluded_repos:
         excluded_repos = []
-    stats = {} 
     now = datetime.datetime.now()
+    engineers = []
+
     for repo in repos: 
 
+        stats = {}
         if verbose:
 
             print(f"repo: {repo}")
@@ -70,34 +72,45 @@ def main(args):
             # process the commits
             for commit in commits['data'][0]:
 
-                try:
+                created_at = convert_time(commit.get("commit").get('author').get('date'))
+                if start_date <= created_at <= end_date:
+                    try:
+                        engineer = (commit.get('author').get('login'))
+                        if stats.get(engineer) is None:
+                            stats[engineer] = {}
+                            stats[engineer]['commit_count'] = 1
+                        else:
+                            stats[engineer]['commit_count'] += 1 
 
-                    #commit.get('commit').get('author').get('name')
-                    author = (commit.get('author').get('login'))
-                    print (author)
-                    if stats.get(author) is None:
+                    except AttributeError:
 
-                        stats[author] = {}
-                        stats[author]['commit_count'] = 1
-                    else:
-
-                        stats[author]['commit_count'] += 1 
-
-                except AttributeError:
-
-                    #TODO add better error handling. For now skip the PR
-                    pass
-                
+                        #TODO add better error handling. For now skip the PR
+                        pass
+                    
             prs = g.get_pr_list(repo, params)      
             for pr_list in prs['data']: 
                 
                 for pr in pr_list:
+
                     created_at = convert_time(pr.get("created_at"))
                     merged_at = convert_time(pr.get("merged_at"))
                     closed_at = convert_time(pr.get("closed_at"))
-                    #print(pr.get('user').get('login'))
 
-        print(stats)
+                    if start_date <= created_at <= end_date:
+                        engineer = (pr.get('user').get('login'))
+                        if stats.get(engineer) is None:
+                            stats[engineer] = {}
+                            stats[engineer]['pr_count'] = 1
+                        else:
+                            if stats[engineer].get('pr_count') is None:
+                                stats[engineer]['pr_count'] = 1
+                            else:
+                                stats[engineer]['pr_count'] += 1 
+
+        r = {'repo' : repo, 'stats' : stats}
+        engineers.append(r)
+
+    print(engineers)
                       
                     
 
