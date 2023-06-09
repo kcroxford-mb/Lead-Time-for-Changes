@@ -24,20 +24,14 @@ def print_results(results: List) -> None:
         for k,v in result.get('stats').items():
             engineer = k
             commit_count = v.get('commit_count')
-            pr_count = v.get('pr_count')
+            pr_opened_count = v.get('pr_count')
+            pr_merged_count = v.get('prs_merged')
             p90_merge = v.get('p90_merge')
-            print (f'-- engineer:{engineer}, commits: {commit_count}, prs_opened: {pr_count}, p90_days_to_merge {p90_merge} ')
+            print (f'-- engineer:{engineer}, commits: {commit_count}, prs_opened: {pr_opened_count}, prs_merged: {pr_merged_count}, p90_days_to_merge {p90_merge} ')
     print ("-" * 30 )
 
-def parse_result_method(r):
-    m = re.compile(r'(percentile)(\d{2})')
-    m = m.match(r)
-    if m:
-        return [m.group(1), int(m.group(2)) / 100 ]
-    else:
-        return ['mean']
     
-def process_commits(commits,stats,start_date,end_date):
+def process_commits(commits,stats,start_date,end_date)->List[Dict]:
     for commit in commits['data'][0]:
         created_at = convert_time(commit.get("commit").get('author').get('date'))
         if start_date <= created_at <= end_date:
@@ -53,14 +47,17 @@ def process_commits(commits,stats,start_date,end_date):
                 pass
     return stats
 
-def process_ttm(stats, ttm):
+def process_ttm(stats: List, ttm:List )->List[Dict]:
     for k, v in ttm.items():
         p90 = round(pd.Series(v).quantile(.90))
         stats[k]['p90_merge'] = p90
     return stats
 
 
-def process_prs(prs,stats,start_date,end_date):
+def process_prs(prs: List ,
+                stats :List ,
+                start_date : datetime.datetime,
+                end_date: datetime.datetime)->List[Dict]:
     # Gather the p90 time to merge into develop
     e = {}
     for pr_list in prs['data']: 
@@ -81,6 +78,10 @@ def process_prs(prs,stats,start_date,end_date):
                 
                 # get the time to merge on the PR
                 if merged_at: 
+                    if stats[engineer].get('prs_merged') is None:
+                        stats[engineer]['prs_merged'] = 1
+                    else:
+                        stats[engineer]['prs_merged'] += 1            
                     time_to_merge = merged_at - created_at
                     if not e.get(engineer):
                         e[engineer] = []
@@ -99,6 +100,7 @@ def main(args):
     verbose = args.verbose
     start_date = convert_time(args.startDate)
     end_date = convert_time(args.endDate)
+    target_branch = args.targetBranch
 
     token = os.environ['GITHUB_ACCESS_TOKEN']
     g = Github(token, org)
@@ -131,7 +133,7 @@ def main(args):
 
         r = {'repo' : repo, 'stats' : stats}
         results.append(r)
-        
+
     print_results(results)
                       
                     
