@@ -48,9 +48,7 @@ def process_commits(commits,stats,start_date,end_date):
                     stats[engineer]['commit_count'] = 1
                 else:
                     stats[engineer]['commit_count'] += 1 
-
             except AttributeError:
-
                 #TODO add better error handling. For now skip the PR
                 pass
     return stats
@@ -97,15 +95,12 @@ def process_prs(prs,stats,start_date,end_date):
 def main(args):
     # define args from the CLI 
     org = args.org
-    target_branch = args.targetBranch
     excluded_repos = args.excludedRepos
     verbose = args.verbose
     start_date = convert_time(args.startDate)
     end_date = convert_time(args.endDate)
 
-    base_url = 'https://api.github.com'
     token = os.environ['GITHUB_ACCESS_TOKEN']
-
     g = Github(token, org)
 
     params = {'per_page': 100}
@@ -113,9 +108,8 @@ def main(args):
 
     if not excluded_repos:
         excluded_repos = []
-    now = datetime.datetime.now()
-    results = []
 
+    results = []
     for repo in repos: 
 
         stats = {}
@@ -137,7 +131,7 @@ def main(args):
 
         r = {'repo' : repo, 'stats' : stats}
         results.append(r)
-
+        
     print_results(results)
                       
                     
