@@ -36,10 +36,10 @@ def print_results(results: List, start_date, end_date, target_branch) -> None:
             pr_closed_count = v.get('prs_closed')
             if pr_closed_count is None:
                 pr_closed_count = 0 
-            p90_merge = v.get('p90_merge')
-            if p90_merge is None:
-                p90_merge = 'N/A'
-            print (f'-- engineer:{engineer}, commits:{commit_count}, prs_opened:{pr_opened_count}, prs_merged:{pr_merged_count}, prs_closed:{pr_closed_count}, p90_days_to_merge:{p90_merge} ')
+            p75_merge = v.get('p75_merge')
+            if p75_merge is None:
+                p75_merge = 'N/A'
+            print (f'-- engineer:{engineer}, commits:{commit_count}, prs_opened:{pr_opened_count}, prs_merged:{pr_merged_count}, prs_closed:{pr_closed_count}, p75_days_to_merge:{p75_merge} ')
     print ("-" * 30 )
 
     
@@ -62,8 +62,8 @@ def process_commits(commits,stats,start_date,end_date)->List[Dict]:
 
 def process_ttm(stats: List, ttm:List )->List[Dict]:
     for k, v in ttm.items():
-        p90 = round(pd.Series(v).quantile(.90))
-        stats[k]['p90_merge'] = p90
+        p75 = round(pd.Series(v).quantile(.75))
+        stats[k]['p75_merge'] = p75
     return stats
 
 
@@ -78,6 +78,7 @@ def process_prs(prs: List ,
             created_at = convert_time(pr.get("created_at"))
             merged_at = convert_time(pr.get("merged_at"))
             closed_at = convert_time(pr.get("closed_at"))
+
             if start_date <= created_at <= end_date:
                 engineer = (pr.get('user').get('login'))
                 if stats.get(engineer) is None:
@@ -129,6 +130,7 @@ def main(args):
 
     params = {'per_page': 100}
     repos = g.get_repo_list(params) 
+
 
     if not excluded_repos:
         excluded_repos = []

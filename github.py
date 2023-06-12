@@ -3,6 +3,7 @@ import requests
 import datetime
 from typing import List,Dict
 import pandas as pd
+from github import Github
 
 pd.Series(dtype='float64')
 
