@@ -15,9 +15,11 @@ def convert_time(ts):
         return None
     return datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%SZ')
 
-def print_results(results: List) -> None:
+def print_results(results: List, start_date, end_date, target_branch) -> None:
     print ("-" * 30 )  
     print ("Results:")
+    print (f"-Date Range: {start_date} - {end_date}")
+    print (f"-Merged To Branch: {target_branch}")
     for result in results:
         repo = result.get('repo')
         print (f'- Repo : {repo}')
@@ -25,26 +27,37 @@ def print_results(results: List) -> None:
             engineer = k
             commit_count = v.get('commit_count')
             pr_opened_count = v.get('pr_count')
+
+            if pr_opened_count is None:
+                pr_opened_count = 0 
             pr_merged_count = v.get('prs_merged')
+            if pr_merged_count is None:
+                pr_merged_count = 0 
+            pr_closed_count = v.get('prs_closed')
+            if pr_closed_count is None:
+                pr_closed_count = 0 
             p90_merge = v.get('p90_merge')
-            print (f'-- engineer:{engineer}, commits: {commit_count}, prs_opened: {pr_opened_count}, prs_merged: {pr_merged_count}, p90_days_to_merge {p90_merge} ')
+            if p90_merge is None:
+                p90_merge = 'N/A'
+            print (f'-- engineer:{engineer}, commits:{commit_count}, prs_opened:{pr_opened_count}, prs_merged:{pr_merged_count}, prs_closed:{pr_closed_count}, p90_days_to_merge:{p90_merge} ')
     print ("-" * 30 )
 
     
 def process_commits(commits,stats,start_date,end_date)->List[Dict]:
-    for commit in commits['data'][0]:
-        created_at = convert_time(commit.get("commit").get('author').get('date'))
-        if start_date <= created_at <= end_date:
-            try:
-                engineer = (commit.get('author').get('login'))
-                if stats.get(engineer) is None:
-                    stats[engineer] = {}
-                    stats[engineer]['commit_count'] = 1
-                else:
-                    stats[engineer]['commit_count'] += 1 
-            except AttributeError:
-                #TODO add better error handling. For now skip the PR
-                pass
+    for commit_list in commits['data']:
+        for commit in commit_list:
+            created_at = convert_time(commit.get("commit").get('author').get('date'))
+            if start_date <= created_at <= end_date:
+                try:
+                    engineer = (commit.get('author').get('login'))
+                    if stats.get(engineer) is None:
+                        stats[engineer] = {}
+                        stats[engineer]['commit_count'] = 1
+                    else:
+                        stats[engineer]['commit_count'] += 1 
+                except AttributeError:
+                    #TODO add better error handling. For now skip the PR
+                    pass
     return stats
 
 def process_ttm(stats: List, ttm:List )->List[Dict]:
@@ -83,11 +96,20 @@ def process_prs(prs: List ,
                     else:
                         stats[engineer]['prs_merged'] += 1            
                     time_to_merge = merged_at - created_at
+
                     if not e.get(engineer):
                         e[engineer] = []
                         e[engineer].append(time_to_merge.days)
                     else:
                         e[engineer].append(time_to_merge.days)
+
+                # Check if there are PRs that have been closed
+                if closed_at and not merged_at: 
+                    if stats[engineer].get('prs_closed') is None:
+                        stats[engineer]['prs_closed'] = 1
+                    else:
+                        stats[engineer]['prs_closed'] += 1            
+
 
     stats = process_ttm(stats, e) 
     return stats
@@ -134,7 +156,7 @@ def main(args):
         r = {'repo' : repo, 'stats' : stats}
         results.append(r)
 
-    print_results(results)
+    print_results(results, start_date, end_date, target_branch)
                       
                     
 
